@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUIT_01 // Tuesday 09:14</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cobalt: #3A8BFF;
+    --cobalt-glow: #7AB4FF;
+    --cobalt-bright: #A8CCFF;
+    --amber: #FFC857;
+    --ruby: #FF4477;
+    --ink: #03060D;
+    --ink-2: #0A1020;
+    --ink-3: #141C2E;
+    --quartz: #2A3348;
+    --mid: #A0AEC8;
+    --soft: #E8EDF6;
+    --white: #FFFFFF;
+    --slack-bg: #1A1D21;
+    --slack-text: #D1D2D3;
+    --slack-link: #1D9BD1;
+    --slack-mid: #ABABAD;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: 'Inter', sans-serif; font-weight: 400;
+    background: var(--ink); color: var(--soft); line-height: 1.65;
+    min-height: 100vh; overflow-x: hidden;
+  }
+  #matrix { position: fixed; inset: 0; z-index: 0; opacity: 0.08; pointer-events: none; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px, rgba(58,139,255,0.015) 3px, rgba(0,0,0,0) 4px);
+    pointer-events: none; z-index: 1;
+  }
+  body::after {
+    content: ''; position: fixed; top: 50%; left: 50%;
+    width: 800px; height: 800px; transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(58, 139, 255, 0.04) 0%, transparent 60%);
+    pointer-events: none; z-index: 0; animation: pulse 8s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+  .app { max-width: 820px; margin: 0 auto; padding: 20px 24px 60px; position: relative; z-index: 2; }
+  .hud {
+    background: linear-gradient(180deg, var(--ink-2) 0%, var(--ink-3) 100%);
+    border: 1px solid var(--quartz); border-radius: 8px;
+    padding: 14px 18px; margin-bottom: 16px; position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .hud::before, .hud::after { content: ''; position: absolute; width: 10px; height: 10px; border-color: var(--cobalt); border-style: solid; }
+  .hud::before { top: 6px; left: 6px; border-width: 1px 0 0 1px; }
+  .hud::after { bottom: 6px; right: 6px; border-width: 0 1px 1px 0; }
+  .hud-top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--quartz); margin-bottom: 12px; }
+  .logo { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px; letter-spacing: 0.1em; color: var(--white); display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
+  .logo-mark {
+    width: 16px; height: 16px; background: var(--cobalt); border-radius: 3px;
+    position: relative; box-shadow: 0 0 12px var(--cobalt-glow);
+    animation: mark-pulse 2s ease-in-out infinite;
+  }
+  @keyframes mark-pulse { 0%,100%{box-shadow:0 0 12px var(--cobalt-glow)} 50%{box-shadow:0 0 20px var(--cobalt-glow),0 0 30px var(--cobalt)} }
+  .logo-mark::after { content: ''; position: absolute; inset: 4px; background: var(--ink); border-radius: 1px; }
+  .day-counter { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--cobalt-glow); letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; }
+  .day-counter::before { content: '> '; color: var(--cobalt); }
+  .hp-label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .hp-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mid); font-weight: 700; }
+  .hp-val { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--white); }
+  .hp-val .slash { color: var(--mid); font-weight: 400; }
+  .hp-bar-wrap { position: relative; }
+  .hp-bar { height: 10px; background: var(--ink); border: 1px solid var(--quartz); border-radius: 3px; overflow: hidden; }
+  .hp-fill {
+    height: 100%; transition: width 0.7s cubic-bezier(0.4,0,0.2,1), background 0.3s;
+    background: var(--cobalt); box-shadow: 0 0 15px var(--cobalt); position: relative;
+  }
+  .hp-fill::after {
+    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shine 3s ease-in-out infinite;
+  }
+  @keyframes shine { 0%{left:-100%} 100%{left:200%} }
+  .hp-fill.mid { background: var(--amber); box-shadow: 0 0 15px var(--amber); }
+  .hp-fill.low { background: var(--ruby); box-shadow: 0 0 20px var(--ruby); animation: crit 0.8s infinite; }
+  @keyframes crit { 0%,100%{box-shadow:0 0 15px var(--ruby)} 50%{box-shadow:0 0 30px var(--ruby),0 0 50px var(--ruby)} }
+  .hp-change {
+    position: absolute; top: -22px; right: 0;
+    font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700;
+    pointer-events: none; animation: dmg 1.8s ease-out forwards; z-index: 10;
+  }
+  .hp-change.dmg { color: var(--ruby); text-shadow: 0 0 12px var(--ruby); }
+  .hp-change.heal { color: var(--cobalt-glow); text-shadow: 0 0 12px var(--cobalt-glow); }
+  @keyframes dmg {
+    0% { opacity: 0; transform: translateY(0) scale(0.8); }
+    15% { opacity: 1; transform: translateY(-8px) scale(1.3); }
+    100% { opacity: 0; transform: translateY(-40px); }
+  }
+  .scene {
+    background: linear-gradient(180deg, var(--ink-2) 0%, var(--ink-3) 100%);
+    border: 1px solid var(--quartz); border-radius: 10px;
+    padding: 28px 26px; box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    position: relative; overflow: hidden;
+  }
+  .scene::before, .scene::after { content: ''; position: absolute; width: 16px; height: 16px; border-color: var(--cobalt); border-style: solid; opacity: 0.7; }
+  .scene::before { top: 10px; left: 10px; border-width: 1px 0 0 1px; }
+  .scene::after { bottom: 10px; right: 10px; border-width: 0 1px 1px 0; }
+  .scene-label {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 11px;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--cobalt-glow);
+    margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .scene-label::before { content: '●'; color: var(--cobalt); animation: blink 2s infinite; font-size: 8px; }
+  @keyframes blink { 0%,50%{opacity:1} 51%,100%{opacity:0.3} }
+  .scene-title {
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 26px;
+    line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 16px; color: var(--white);
+  }
+  .scene-body { font-size: 15px; color: var(--soft); line-height: 1.75; }
+  .scene-body p { margin-bottom: 12px; }
+  .scene-body p:last-child { margin-bottom: 0; }
+  .scene-body em { font-style: italic; color: var(--mid); }
+  .scene-body strong { font-weight: 600; color: var(--white); }
+
+  /* Slack panel — real styling */
+  .slack {
+    margin: 16px 0;
+    background: var(--slack-bg);
+    border-radius: 6px;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    border: 1px solid #2C2D30;
+  }
+  .slack-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid #2C2D30;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #1A1D21;
+  }
+  .slack-channel {
+    color: var(--slack-text);
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .slack-channel::before { content: '#'; color: var(--slack-mid); margin-right: 2px; font-weight: 400; }
+  .slack-unread {
+    margin-left: auto;
+    background: var(--ruby);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    letter-spacing: 0.05em;
+  }
+  .slack-msg {
+    padding: 12px 14px;
+    display: flex;
+    gap: 10px;
+  }
+  .slack-avatar {
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #E8695A 0%, #D54B3D 100%);
+    color: var(--white);
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .slack-content { flex: 1; min-width: 0; }
+  .slack-author-row {
+    display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px;
+  }
+  .slack-author { color: var(--white); font-weight: 700; font-size: 14px; }
+  .slack-time { color: var(--slack-mid); font-size: 11px; }
+  .slack-text {
+    color: var(--slack-text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Email notification */
+  .email {
+    margin: 12px 0 16px;
+    background: rgba(255, 68, 119, 0.06);
+    border: 1px solid rgba(255, 68, 119, 0.4);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 0 20px rgba(255, 68, 119, 0.15);
+    animation: slide-in 0.5s ease-out, email-pulse 2s ease-in-out infinite;
+  }
+  @keyframes slide-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes email-pulse { 0%,100%{box-shadow:0 0 20px rgba(255,68,119,0.15)} 50%{box-shadow:0 0 30px rgba(255,68,119,0.3)} }
+  .email-header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ruby);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .email-header::before { content: '✉ INBOX · '; color: var(--mid); }
+  .email-from { font-size: 12px; color: var(--mid); margin-bottom: 3px; }
+  .email-from strong { color: var(--soft); font-weight: 600; }
+  .email-subj { font-size: 14px; color: var(--white); font-weight: 600; margin-bottom: 6px; }
+  .email-body { font-size: 13px; color: var(--soft); line-height: 1.5; font-style: italic; }
+
+  .phone-ringing {
+    margin: 16px 0 0;
+    padding: 14px 16px;
+    background: rgba(58, 139, 255, 0.08);
+    border: 1px solid var(--cobalt);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 0 25px rgba(58, 139, 255, 0.2);
+    animation: ring 1.2s ease-in-out infinite;
+  }
+  @keyframes ring {
+    0%, 100% { box-shadow: 0 0 25px rgba(58, 139, 255, 0.2); }
+    50% { box-shadow: 0 0 40px rgba(58, 139, 255, 0.45); transform: translateX(-1px); }
+  }
+  .phone-icon {
+    width: 32px; height: 32px;
+    border: 2px solid var(--cobalt-glow);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cobalt-glow);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .phone-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--white);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .phone-sub {
+    font-size: 11px;
+    color: var(--mid);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* Choices */
+  .choices { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+  .choice {
+    display: flex; align-items: flex-start; gap: 12px; width: 100%;
+    text-align: left; padding: 13px 16px;
+    background: rgba(58, 139, 255, 0.04); border: 1px solid var(--quartz);
+    border-radius: 5px; font-family: 'Inter', sans-serif; font-size: 14px;
+    color: var(--white); cursor: pointer; transition: all 0.15s; line-height: 1.45;
+  }
+  .choice:not(:disabled):hover { border-color: var(--cobalt); background: rgba(58, 139, 255, 0.1); }
+  .choice:disabled { opacity: 0.35; cursor: not-allowed; }
+  .choice-cmd {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+    color: var(--amber); letter-spacing: 0.1em; min-width: 120px; flex-shrink: 0;
+    text-shadow: 0 0 8px rgba(255, 200, 87, 0.3);
+  }
+  .choice-desc { flex: 1; color: var(--soft); font-size: 13px; }
+  .choice-lock { color: var(--mid); font-size: 11px; font-style: italic; margin-top: 4px; display: block; }
+  @media (hover: none) { .choice:hover { border-color: var(--quartz); background: rgba(58, 139, 255, 0.04); } }
+
+  /* Answer button (Run 2 single-answer) */
+  .answer-btn {
+    margin-top: 18px;
+    display: block; width: 100%;
+    padding: 16px 18px;
+    background: rgba(58, 139, 255, 0.1);
+    border: 1px solid var(--cobalt);
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    color: var(--white);
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 20px rgba(58, 139, 255, 0.15);
+  }
+  .answer-btn:hover {
+    background: rgba(58, 139, 255, 0.2);
+    box-shadow: 0 0 30px rgba(58, 139, 255, 0.35);
+  }
+  .answer-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--cobalt-glow);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .answer-tag::before { content: '> '; }
+  .answer-text { font-size: 14px; color: var(--white); line-height: 1.55; font-style: italic; }
+
+  /* Vault scan minigame */
+  .vault-mg {
+    margin: 16px 0; padding: 16px; background: rgba(3, 6, 13, 0.9);
+    border: 1px solid var(--cobalt); border-radius: 6px;
+  }
+  .vault-head { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--cobalt-glow); letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700; margin-bottom: 12px; }
+  .vault-head::before { content: '// '; }
+  .vault-item {
+    padding: 10px 12px;
+    background: rgba(58, 139, 255, 0.04);
+    border: 1px solid var(--quartz);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.15s;
+  }
+  .vault-item.tagged-exposed { border-color: var(--ruby); background: rgba(255, 68, 119, 0.08); }
+  .vault-item.tagged-routine { border-color: var(--cobalt-glow); background: rgba(122, 180, 255, 0.08); }
+  .vault-item-info { flex: 1; min-width: 0; }
+  .vault-item-name { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--white); font-weight: 500; margin-bottom: 2px; }
+  .vault-item-detail { font-size: 11px; color: var(--mid); }
+  .vault-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .vault-btn {
+    padding: 7px 12px; border: 1px solid var(--quartz); background: transparent;
+    color: var(--soft); font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; border-radius: 3px; transition: all 0.1s;
+  }
+  .vault-btn.exposed:hover { border-color: var(--ruby); color: var(--ruby); }
+  .vault-btn.ok:hover { border-color: var(--cobalt-glow); color: var(--cobalt-glow); }
+  .vault-btn.picked.exposed { border-color: var(--ruby); color: var(--ruby); background: rgba(255, 68, 119, 0.1); }
+  .vault-btn.picked.ok { border-color: var(--cobalt-glow); color: var(--cobalt-glow); background: rgba(122, 180, 255, 0.1); }
+  .vault-confirm {
+    margin-top: 10px; width: 100%; padding: 12px;
+    background: var(--cobalt); color: var(--white); border: none;
+    font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase; border-radius: 4px;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 0 20px rgba(58, 139, 255, 0.3);
+  }
+  .vault-confirm:hover { background: var(--cobalt-glow); }
+  .vault-confirm:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+  /* Hold-to-purge */
+  .purge-wrap {
+    margin: 16px 0; padding: 20px; background: rgba(3, 6, 13, 0.95);
+    border: 1px solid var(--ruby); border-radius: 6px; text-align: center;
+    box-shadow: 0 0 25px rgba(255, 68, 119, 0.2);
+  }
+  .purge-head {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ruby);
+    letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700; margin-bottom: 14px;
+  }
+  .purge-head::before { content: '!! '; }
+  .purge-btn {
+    position: relative;
+    display: inline-block; padding: 18px 36px;
+    background: var(--ink-2); border: 2px solid var(--ruby);
+    color: var(--ruby); font-family: 'JetBrains Mono', monospace;
+    font-weight: 700; font-size: 14px; letter-spacing: 0.15em;
+    text-transform: uppercase; cursor: pointer; border-radius: 4px;
+    user-select: none; overflow: hidden;
+    box-shadow: 0 0 25px rgba(255, 68, 119, 0.3);
+    transition: transform 0.1s;
+  }
+  .purge-btn:active { transform: scale(0.98); }
+  .purge-btn .fill {
+    position: absolute; left: 0; bottom: 0;
+    width: 100%; height: 0%;
+    background: var(--ruby); opacity: 0.4;
+    transition: height 0.05s linear;
+    pointer-events: none;
+  }
+  .purge-btn.done { background: var(--ruby); color: var(--white); box-shadow: 0 0 40px var(--ruby); }
+  .purge-btn-label { position: relative; z-index: 2; }
+  .purge-hint { margin-top: 12px; font-size: 11px; color: var(--mid); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; }
+  .purge-log {
+    margin-top: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--mid);
+    text-align: left;
+    line-height: 1.7;
+    max-height: 140px;
+    overflow: hidden;
+  }
+  .purge-log div { opacity: 0; animation: log-in 0.2s forwards; }
+  .purge-log div.wipe { color: var(--ruby); }
+  .purge-log div.done { color: var(--cobalt-glow); }
+  @keyframes log-in { to { opacity: 0.85; } }
+
+  /* Key pull animation (Run 2) */
+  .keypull-wrap {
+    margin: 16px 0; padding: 20px 16px;
+    background: rgba(3, 6, 13, 0.95);
+    border: 1px solid var(--cobalt); border-radius: 6px;
+    box-shadow: 0 0 30px rgba(58, 139, 255, 0.2);
+  }
+  .keypull-head {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--cobalt-glow);
+    letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700; margin-bottom: 14px; text-align: center;
+  }
+  .key-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+  .key {
+    aspect-ratio: 1;
+    background: rgba(58, 139, 255, 0.1);
+    border: 1px solid var(--cobalt);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cobalt-glow);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    position: relative;
+    transition: all 0.3s;
+    box-shadow: 0 0 10px rgba(58, 139, 255, 0.2);
+  }
+  .key.revoked {
+    animation: key-shatter 0.6s forwards;
+  }
+  @keyframes key-shatter {
+    0% { transform: scale(1) rotate(0); opacity: 1; }
+    30% { transform: scale(1.15) rotate(8deg); box-shadow: 0 0 30px var(--cobalt-glow); }
+    60% { transform: scale(0.8) rotate(-12deg); opacity: 0.6; border-color: var(--ruby); color: var(--ruby); }
+    100% { transform: scale(0) rotate(45deg); opacity: 0; }
+  }
+  .key-symbol {
+    font-size: 18px;
+  }
+  .keypull-status {
+    margin-top: 16px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--cobalt-glow);
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    min-height: 18px;
+  }
+  .keypull-status.done { color: var(--cobalt-bright); }
+
+  /* File browser (Run 2 Scene 1) */
+  .file-browser {
+    margin: 14px 0;
+    background: rgba(3, 6, 13, 0.9);
+    border: 1px solid var(--cobalt);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .fb-head {
+    padding: 10px 14px;
+    background: rgba(58, 139, 255, 0.08);
+    border-bottom: 1px solid var(--quartz);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--cobalt-glow);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .fb-head::before { content: '◼ '; }
+  .fb-row {
+    padding: 8px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--soft);
+    border-bottom: 1px solid rgba(42, 51, 72, 0.5);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    opacity: 0;
+    animation: fb-in 0.2s forwards;
+  }
+  .fb-row:last-child { border-bottom: none; }
+  @keyframes fb-in { to { opacity: 1; } }
+  .fb-icon { color: var(--mid); }
+  .fb-name { flex: 1; }
+  .fb-hex { color: var(--cobalt-glow); font-size: 10px; opacity: 0.7; }
+  .fb-row.protected .fb-name {
+    animation: redact 0.8s 0.3s forwards;
+  }
+  @keyframes redact {
+    0% { color: var(--soft); }
+    100% { color: var(--cobalt-glow); }
+  }
+  .fb-row.protected .fb-redact {
+    display: inline-block;
+    background: var(--cobalt);
+    color: var(--cobalt);
+    animation: redact-block 0.6s 0.5s forwards;
+    border-radius: 2px;
+    padding: 0 2px;
+    margin: 0 2px;
+  }
+  @keyframes redact-block {
+    0% { letter-spacing: 0; }
+    100% { letter-spacing: -0.01em; }
+  }
+  .fb-status {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .fb-status.sealed { background: rgba(58, 139, 255, 0.2); color: var(--cobalt-bright); border: 1px solid var(--cobalt); }
+  .fb-status.open { background: rgba(160, 174, 200, 0.1); color: var(--mid); border: 1px solid var(--quartz); }
+
+  /* Karim text thread */
+  .text-thread {
+    margin: 14px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .text-bubble {
+    padding: 10px 14px;
+    border-radius: 14px;
+    max-width: 80%;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    opacity: 0;
+    animation: text-in 0.3s forwards;
+  }
+  .text-bubble.them {
+    background: rgba(42, 51, 72, 0.8);
+    color: var(--soft);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .text-bubble.you {
+    background: var(--cobalt);
+    color: var(--white);
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .text-bubble-name {
+    font-size: 10px;
+    color: var(--mid);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 0 8px;
+    opacity: 0;
+    animation: text-in 0.3s forwards;
+  }
+  @keyframes text-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .typing-indicator {
+    padding: 12px 16px;
+    background: rgba(42, 51, 72, 0.6);
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+    max-width: 60px;
+    align-self: flex-start;
+    display: flex;
+    gap: 4px;
+  }
+  .typing-dot {
+    width: 6px; height: 6px;
+    background: var(--mid);
+    border-radius: 50%;
+    animation: typing 1.2s ease-in-out infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing { 0%,60%,100%{opacity:0.3;transform:translateY(0)} 30%{opacity:1;transform:translateY(-2px)} }
+
+  /* Achievement toast */
+  .ach-container { position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; max-width: 320px; }
+  .ach-toast {
+    background: linear-gradient(135deg, var(--ink-2) 0%, var(--ink-3) 100%);
+    border: 1px solid var(--cobalt); border-left: 3px solid var(--cobalt);
+    border-radius: 6px; padding: 12px 16px;
+    box-shadow: 0 8px 30px rgba(58, 139, 255, 0.3);
+    animation: toast 4s ease-out forwards; min-width: 260px;
+  }
+  .ach-toast.bad { border-color: var(--ruby); border-left-color: var(--ruby); box-shadow: 0 8px 30px rgba(255, 68, 119, 0.3); }
+  .ach-toast.good { border-color: var(--amber); border-left-color: var(--amber); box-shadow: 0 8px 30px rgba(255, 200, 87, 0.3); }
+  @keyframes toast { 0%{transform:translateX(400px);opacity:0} 10%,85%{transform:translateX(0);opacity:1} 100%{transform:translateX(400px);opacity:0} }
+  .ach-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--cobalt-glow); margin-bottom: 4px; font-weight: 700; }
+  .ach-toast.bad .ach-label { color: var(--ruby); }
+  .ach-toast.good .ach-label { color: var(--amber); }
+  .ach-title { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; color: var(--white); margin-bottom: 3px; display: flex; align-items: center; gap: 8px; }
+  .ach-icon { font-size: 16px; }
+  .ach-desc { font-size: 12px; color: var(--mid); line-height: 1.4; }
+
+  /* Breach overlay */
+  .breach-overlay { position: fixed; inset: 0; background: rgba(255, 68, 119, 0.15); z-index: 500; display: none; align-items: center; justify-content: center; pointer-events: none; }
+  .breach-overlay.active { display: flex; animation: bflash 0.3s ease-out 6; }
+  .breach-text { font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 700; color: var(--ruby); letter-spacing: 0.2em; text-shadow: 0 0 40px var(--ruby), 0 0 80px var(--ruby); animation: bscale 2s ease-out; }
+  @keyframes bflash { 0%,100%{background:rgba(255,68,119,0)} 50%{background:rgba(255,68,119,0.3)} }
+  @keyframes bscale { 0%{transform:scale(0.5);opacity:0} 40%{transform:scale(1.1);opacity:1} 100%{transform:scale(1);opacity:1} }
+
+  /* Run 2 banner */
+  .run2-banner {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: linear-gradient(90deg, rgba(58, 139, 255, 0.15), rgba(58, 139, 255, 0.05));
+    border: 1px solid var(--cobalt);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--cobalt-bright);
+    box-shadow: 0 0 20px rgba(58, 139, 255, 0.15);
+  }
+  .run2-banner::before { content: '◉'; color: var(--cobalt-glow); animation: blink 2s infinite; margin-right: 8px; }
+
+  /* Pivot screen */
+  .pivot {
+    text-align: center;
+    padding: 60px 30px;
+  }
+  .pivot-line {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--white);
+    margin-bottom: 30px;
+    line-height: 1.3;
+    opacity: 0;
+    animation: fadeIn 0.8s 0.3s forwards;
+  }
+  .pivot-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--cobalt-glow);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 36px;
+    opacity: 0;
+    animation: fadeIn 0.8s 1.2s forwards;
+  }
+  .pivot-btn {
+    padding: 16px 32px;
+    background: var(--cobalt);
+    color: var(--white);
+    border: none;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(58, 139, 255, 0.4);
+    transition: all 0.2s;
+    opacity: 0;
+    animation: fadeIn 0.8s 2s forwards;
+  }
+  .pivot-btn:hover { background: var(--cobalt-glow); box-shadow: 0 0 40px rgba(122, 180, 255, 0.6); }
+
+  /* Final compare card */
+  .compare {
+    margin-top: 18px;
+    padding: 22px;
+    border: 1px solid var(--cobalt);
+    border-radius: 8px;
+    background: rgba(58, 139, 255, 0.06);
+  }
+  .compare-head {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cobalt-glow);
+    font-weight: 700;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .compare-table {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--quartz);
+    border: 1px solid var(--quartz);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .compare-cell {
+    padding: 12px 10px;
+    background: var(--ink-2);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+  }
+  .compare-cell.head {
+    background: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--mid);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    text-align: center;
+  }
+  .compare-cell.head.before { color: var(--ruby); }
+  .compare-cell.head.after { color: var(--cobalt-bright); }
+  .compare-cell.label { color: var(--mid); font-size: 12px; }
+  .compare-cell.val-bad { color: var(--ruby); font-weight: 600; text-align: center; font-family: 'JetBrains Mono', monospace; }
+  .compare-cell.val-good { color: var(--cobalt-bright); font-weight: 600; text-align: center; font-family: 'JetBrains Mono', monospace; }
+
+  .compare-summary {
+    margin-top: 18px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    text-align: center;
+  }
+  .compare-summary-line {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--white);
+    font-weight: 500;
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+  .compare-summary-line strong { color: var(--cobalt-glow); font-weight: 700; }
+  .compare-summary-sub {
+    font-size: 13px;
+    color: var(--mid);
+    margin-top: 8px;
+  }
+
+  .cta-block {
+    margin-top: 20px;
+    padding: 22px;
+    border: 1px solid var(--cobalt);
+    border-radius: 8px;
+    background: rgba(58, 139, 255, 0.06);
+    text-align: center;
+  }
+  .cta-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--cobalt-glow);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .cta-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.25;
+    margin-bottom: 10px;
+  }
+  .cta-body {
+    font-size: 14px;
+    color: var(--soft);
+    line-height: 1.7;
+    margin-bottom: 6px;
+  }
+  .cta-line {
+    font-size: 14px;
+    color: var(--cobalt-glow);
+    font-weight: 600;
+    margin-bottom: 18px;
+  }
+
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; border: 1px solid; transition: all 0.2s; text-decoration: none; }
+  .btn-primary { background: var(--cobalt); color: var(--white); border-color: var(--cobalt); box-shadow: 0 0 20px rgba(58, 139, 255, 0.4); }
+  .btn-primary:hover { background: var(--cobalt-glow); }
+  .btn-secondary { background: transparent; color: var(--white); border-color: var(--quartz); }
+  .btn-secondary:hover { border-color: var(--cobalt); color: var(--cobalt-glow); }
+  .end-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .fade-in { animation: fadeIn 0.5s cubic-bezier(0.4,0,0.2,1) forwards; }
+
+  .glitch { position: relative; animation: gm 3s infinite; }
+  .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; }
+  .glitch::before { color: var(--ruby); z-index: -1; animation: g1 3s infinite; }
+  .glitch::after { color: var(--cobalt); z-index: -2; animation: g2 3s infinite; }
+  @keyframes gm { 0%,90%,100%{transform:translate(0)} 92%{transform:translate(-2px,1px)} 94%{transform:translate(2px,-1px)} 96%{transform:translate(-1px,-1px)} }
+  @keyframes g1 { 0%,90%,100%{transform:translate(0)} 92%{transform:translate(-3px,0)} 94%{transform:translate(3px,0)} }
+  @keyframes g2 { 0%,90%,100%{transform:translate(0)} 92%{transform:translate(3px,0)} 94%{transform:translate(-3px,0)} }
+
+  .footer-note { margin-top: 28px; text-align: center; font-size: 10px; color: var(--mid); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 600; }
+
+  #boot { position: fixed; inset: 0; background: var(--ink); z-index: 9999; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; color: var(--cobalt-glow); font-size: 14px; letter-spacing: 0.08em; font-weight: 500; }
+  .boot-inner { max-width: 480px; padding: 20px; }
+  .boot-line { margin-bottom: 6px; opacity: 0; animation: boot 0.1s forwards; }
+  @keyframes boot { to { opacity: 1; } }
+  .boot-prompt { margin-top: 18px; color: var(--amber); animation: blink 1s infinite; font-weight: 700; }
+
+  @media (max-width: 700px) {
+    .scene { padding: 22px 18px; }
+    .scene-title { font-size: 22px; }
+    .choice { flex-direction: column; gap: 6px; }
+    .choice-cmd { min-width: auto; }
+    .ach-container { left: 20px; right: 20px; max-width: none; }
+    .breach-text { font-size: 36px; }
+    .vault-item { flex-direction: column; align-items: stretch; gap: 8px; }
+    .vault-btns { width: 100%; }
+    .vault-btn { flex: 1; }
+    .compare-table { grid-template-columns: 1.2fr 1fr 1fr; }
+    .compare-cell { padding: 10px 6px; font-size: 11px; }
+    .key-grid { grid-template-columns: repeat(4, 1fr); max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div class="breach-overlay" id="breachOverlay">
+  <div class="breach-text">BREACH</div>
+</div>
+
+<div id="boot">
+  <div class="boot-inner" id="bootInner"></div>
+</div>
+
+<div class="ach-container" id="achContainer"></div>
+
+<div class="app" id="app" style="display:none;">
+  <div class="hud">
+    <div class="hud-top">
+      <div class="logo">
+        <div class="logo-mark"></div>
+        <span>SUIT_01</span>
+      </div>
+      <div class="day-counter" id="dayCounter">09:14 TUE</div>
+    </div>
+    <div>
+      <div class="hp-label-row">
+        <span class="hp-label">◉ System Integrity</span>
+        <span class="hp-val" id="hpVal">100<span class="slash"> / 100</span></span>
+      </div>
+      <div class="hp-bar-wrap" id="hpWrap">
+        <div class="hp-bar"><div class="hp-fill" id="hpFill" style="width:100%"></div></div>
+      </div>
+    </div>
+  </div>
+  <div id="sceneContainer"></div>
+  <div class="footer-note">// confidencial //</div>
+</div>
+
+<script>
+// ==================== BOOT ====================
+const bootLines = [
+  '> suit_01 // cold boot',
+  '> role: chief information security officer',
+  '> firm: 900 attorneys · 47 approved vendors',
+  '> status: tuesday morning',
+  '> ',
+  '> something is about to go wrong',
+  '> '
+];
+const bootInner = document.getElementById('bootInner');
+let bootIdx = 0;
+function typeBoot() {
+  if (bootIdx >= bootLines.length) {
+    const p = document.createElement('div');
+    p.className = 'boot-prompt';
+    p.textContent = '> press any key to begin_';
+    bootInner.appendChild(p);
+    setTimeout(() => {
+      const h = () => { document.removeEventListener('keydown', h); document.removeEventListener('click', h); document.removeEventListener('touchstart', h); start(); };
+      document.addEventListener('keydown', h);
+      document.addEventListener('click', h);
+      document.addEventListener('touchstart', h);
+    }, 200);
+    return;
+  }
+  const l = document.createElement('div');
+  l.className = 'boot-line';
+  l.textContent = bootLines[bootIdx];
+  bootInner.appendChild(l);
+  bootIdx++;
+  setTimeout(typeBoot, 75 + Math.random() * 50);
+}
+function start() {
+  document.getElementById('boot').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  renderHP();
+  render('s1');
+}
+setTimeout(typeBoot, 250);
+
+// ==================== MATRIX ====================
+const canvas = document.getElementById('matrix');
+const ctx = canvas.getContext('2d');
+function rc() { canvas.width = innerWidth; canvas.height = innerHeight; }
+rc();
+addEventListener('resize', rc);
+const mChars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+const fs = 14;
+let cols = Math.floor(canvas.width / fs);
+let drops = Array(cols).fill(1);
+let matrixInterval;
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(3, 6, 13, 0.08)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#3A8BFF';
+  ctx.font = fs + 'px monospace';
+  for (let i = 0; i < drops.length; i++) {
+    const ch = mChars[Math.floor(Math.random() * mChars.length)];
+    ctx.fillText(ch, i * fs, drops[i] * fs);
+    if (drops[i] * fs > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  }
+}
+matrixInterval = setInterval(drawMatrix, 60);
+addEventListener('resize', () => { cols = Math.floor(canvas.width / fs); drops = Array(cols).fill(1); });
+
+// ==================== STATE ====================
+const S = {
+  hp: 100,
+  flags: {},
+  ach: [],
+  run: 1,
+  achDefs: {
+    did_work: { ico: '🔍', name: 'Did the Work', desc: 'Pulled the inventory before picking up the phone.', type: 'good' },
+    clean_scan: { ico: '📋', name: 'Clean Scan', desc: 'Tagged every item correctly.', type: 'good' },
+    leveled: { ico: '🗿', name: 'No Ghost Stories', desc: 'Told Dana the truth when it hurt.', type: 'good' },
+    committed: { ico: '📌', name: 'Overcommitted', desc: 'Promised Dana an answer you didn\'t have.', type: 'bad' },
+    purged: { ico: '🔥', name: 'Scorched', desc: 'Burned your own BD library to stop the bleeding.', type: 'bad' },
+    named_it: { ico: '🎯', name: 'Named It', desc: 'Called out the real problem in the boardroom.', type: 'good' },
+    threw_chair: { ico: '🚫', name: 'Threw the Chair', desc: 'Suggested the firm stop using software.', type: 'bad' },
+    saw_both: { ico: '🔀', name: 'Ran It Back', desc: 'Played both sides of the same day.', type: 'good' }
+  }
+};
+
+function renderHP() {
+  const pct = (S.hp / 100) * 100;
+  const fill = document.getElementById('hpFill');
+  const val = document.getElementById('hpVal');
+  fill.style.width = pct + '%';
+  fill.classList.remove('mid', 'low');
+  if (pct <= 30) fill.classList.add('low');
+  else if (pct <= 60) fill.classList.add('mid');
+  val.innerHTML = S.hp + '<span class="slash"> / 100</span>';
+}
+
+function hp(d) {
+  S.hp = Math.max(0, Math.min(100, S.hp + d));
+  const w = document.getElementById('hpWrap');
+  if (w && d !== 0) {
+    const ind = document.createElement('div');
+    ind.className = 'hp-change ' + (d < 0 ? 'dmg' : 'heal');
+    ind.textContent = (d > 0 ? '+' : '') + d + ' HP';
+    w.appendChild(ind);
+    setTimeout(() => ind.remove(), 1800);
+  }
+  renderHP();
+}
+
+function unlock(id) {
+  if (S.ach.includes(id)) return;
+  const def = S.achDefs[id];
+  if (!def) return;
+  S.ach.push(id);
+  const c = document.getElementById('achContainer');
+  const t = document.createElement('div');
+  t.className = 'ach-toast ' + (def.type || '');
+  t.innerHTML = `<div class="ach-label">Achievement</div><div class="ach-title"><span class="ach-icon">${def.ico}</span>${def.name}</div><div class="ach-desc">${def.desc}</div>`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function showBreach(cb) {
+  const o = document.getElementById('breachOverlay');
+  o.classList.add('active');
+  setTimeout(() => { o.classList.remove('active'); if (cb) cb(); }, 1800);
+}
+
+// ==================== CONTAINER ====================
+const container = document.getElementById('sceneContainer');
+const dayCounter = document.getElementById('dayCounter');
+
+// ==================== RENDER ====================
+function render(id) {
+  const fn = scenes[id];
+  if (!fn) return;
+  fn();
+}
+
+// ==================== RUN 1 ====================
+const scenes = {};
+
+// ---------- Scene 1 ----------
+scenes.s1 = function() {
+  dayCounter.textContent = '09:14 TUE';
+  showBreach(() => {
+    container.innerHTML = `
+      <div class="scene fade-in">
+        <div class="scene-label">09:14 · tuesday</div>
+        <div class="scene-title">RelayPoint just went down.</div>
+        <div class="scene-body">
+          <div class="slack">
+            <div class="slack-header">
+              <span class="slack-channel">sec-incident</span>
+              <span class="slack-unread">1 new</span>
+            </div>
+            <div class="slack-msg">
+              <div class="slack-avatar">MC</div>
+              <div class="slack-content">
+                <div class="slack-author-row">
+                  <span class="slack-author">Mike Chen</span>
+                  <span class="slack-time">9:14 AM</span>
+                </div>
+                <div class="slack-text">RelayPoint status page just went red. Prod tenant breach, 19 days, data already on forums. Every firm that uses them is in this right now.</div>
+              </div>
+            </div>
+          </div>
+          <div class="email">
+            <div class="email-header">just now</div>
+            <div class="email-from">From: <strong>security@relaypoint.com</strong></div>
+            <div class="email-subj">Security Incident Notification</div>
+            <div class="email-body">We are writing to notify customers of unauthorized access to our production environment...</div>
+          </div>
+          <p>Every BD staff and Partner at the firm has a RelayPoint account. Nine months of pitch material, client intel, active M&A matters.</p>
+          <div class="phone-ringing">
+            <div class="phone-icon">☎</div>
+            <div>
+              <div class="phone-text">Dana Ortiz</div>
+              <div class="phone-sub">your GC · incoming</div>
+            </div>
+          </div>
+        </div>
+        <div class="choices">
+          <button class="choice" data-c="0">
+            <span class="choice-cmd">&gt; TAKE CALL</span>
+            <span class="choice-desc">Pick up blind. You don't know what's exposed yet.</span>
+          </button>
+          <button class="choice" data-c="1">
+            <span class="choice-cmd">&gt; CHECK VAULT</span>
+            <span class="choice-desc">Let it ring. Scan your tenant first.</span>
+          </button>
+        </div>
+      </div>
+    `;
+    wireChoices([
+      () => { S.flags.blind = true; hp(-10); render('s3_blind'); },
+      () => { S.flags.informed = true; unlock('did_work'); hp(-5); render('s2_vault'); }
+    ]);
+  });
+};
+
+// ---------- Scene 2 — vault scan ----------
+scenes.s2_vault = function() {
+  dayCounter.textContent = '09:16 TUE';
+  const items = [
+    { name: 'hendricks_diligence_v7.pkg', detail: '400MB · M&A · live matter', correct: 'exposed' },
+    { name: 'pitch_templates_generic/', detail: 'stock marketing · no client data', correct: 'ok' },
+    { name: 'client_pipeline_q2.xlsx', detail: 'deal names, targets, partner notes', correct: 'exposed' },
+    { name: 'marketing_logos_2024.zip', detail: 'firm branding · public', correct: 'ok' }
+  ];
+  const tags = [null, null, null, null];
+
+  container.innerHTML = `
+    <div class="scene fade-in">
+      <div class="scene-label">09:16</div>
+      <div class="scene-title">Scan the tenant.</div>
+      <div class="scene-body">
+        <p>Phone is ringing. Ignore it. Tag each item — exposed, or routine? Dana's going to ask.</p>
+        <div class="vault-mg">
+          <div class="vault-head">RelayPoint admin // your tenant</div>
+          <div id="vaultItems"></div>
+          <button class="vault-confirm" id="vaultGo" disabled>Submit Inventory</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const wrap = document.getElementById('vaultItems');
+  items.forEach((it, i) => {
+    const div = document.createElement('div');
+    div.className = 'vault-item';
+    div.innerHTML = `
+      <div class="vault-item-info">
+        <div class="vault-item-name">${it.name}</div>
+        <div class="vault-item-detail">${it.detail}</div>
+      </div>
+      <div class="vault-btns">
+        <button class="vault-btn exposed" data-i="${i}" data-t="exposed">Exposed</button>
+        <button class="vault-btn ok" data-i="${i}" data-t="ok">Routine</button>
+      </div>
+    `;
+    wrap.appendChild(div);
+  });
+
+  wrap.querySelectorAll('.vault-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const i = +b.getAttribute('data-i');
+      const t = b.getAttribute('data-t');
+      tags[i] = t;
+      const parent = b.closest('.vault-item');
+      parent.classList.remove('tagged-exposed', 'tagged-routine');
+      parent.classList.add('tagged-' + (t === 'exposed' ? 'exposed' : 'routine'));
+      parent.querySelectorAll('.vault-btn').forEach(bb => bb.classList.remove('picked'));
+      b.classList.add('picked');
+      const go = document.getElementById('vaultGo');
+      go.disabled = tags.some(x => x === null);
+    });
+  });
+
+  document.getElementById('vaultGo').addEventListener('click', () => {
+    let correct = 0;
+    items.forEach((it, i) => { if (tags[i] === it.correct) correct++; });
+    if (correct === items.length) {
+      unlock('clean_scan');
+      S.flags.cleanScan = true;
+    } else {
+      hp(-(items.length - correct) * 3);
+    }
+    render('s3_scan');
+  });
+};
+
+// ---------- Scene 3 — Dana (branch) ----------
+scenes.s3_blind = function() {
+  dayCounter.textContent = '09:22 TUE';
+  container.innerHTML = `
+    <div class="scene fade-in">
+      <div class="scene-label">09:22</div>
+      <div class="scene-title">Dana on the line.</div>
+      <div class="scene-body">
+        <p>You picked up blind. She's been talking for six minutes. You have nothing to give her.</p>
+        <p><strong>Dana:</strong> "I need to know what to tell the clients by end of day."</p>
+      </div>
+      <div class="choices">
+        <button class="choice" data-c="0">
+          <span class="choice-cmd">&gt; COMMIT</span>
+          <span class="choice-desc">"You'll have it." You'll figure it out after the call.</span>
+        </button>
+        <button class="choice" data-c="1">
+          <span class="choice-cmd">&gt; LEVEL</span>
+          <span class="choice-desc">"I need an hour. I don't have the inventory yet."</span>
+        </button>
+      </div>
+    </div>
+  `;
+  wireChoices([
+    () => { S.flags.committed = true; unlock('committed'); hp(-10); render('s4_karim'); },
+    () => { S.flags.leveled = true; unlock('leveled'); hp(-5); render('s4_karim'); }
+  ]);
+};
+
+scenes.s3_scan = function() {
+  dayCounter.textContent = '09:22 TUE';
+  container.innerHTML = `
+    <div class="scene fade-in">
+      <div class="scene-label">09:22</div>
+      <div class="scene-title">Dana calls back.</div>
+      <div class="scene-body">
+        <p>You walk her through the scan. Hendricks is in there. Client pipeline. Nine months of live matter material in a tenant you don't control.</p>
+        <p><strong>Dana:</strong> "Where's the data now?"</p>
+        <p>You don't know. Nobody knows. RelayPoint's forensic report won't land for days.</p>
+        <p><strong>Dana:</strong> "I need to know what to tell the clients by end of day."</p>
+      </div>
+      <div class="choices">
+        <button class="choice" data-c="0">
+          <span class="choice-cmd">&gt; COMMIT</span>
+          <span class="choice-desc">"You'll have it." Buy time, figure it out later.</span>
+        </button>
+        <button class="choice" data-c="1">
+          <span class="choice-cmd">&gt; LEVEL</span>
+          <span class="choice-desc">"I can tell you what was in the tenant. I can't tell you where it is now."</span>
+        </button>
+      </div>
+    </div>
+  `;
+  wireChoices([
+    () => { S.flags.committed = true; unlock('committed'); hp(-10); render('s4_karim'); },
+    () => { S.flags.leveled = true; unlock('leveled'); hp(-5); render('s4_karim'); }
+  ]);
+};
+
+// ---------- Scene 4 — Karim ----------
+scenes.s4_karim = function() {
+  dayCounter.textContent = '09:31 TUE';
+  container.innerHTML = `
+    <div class="scene fade-in">
+      <div class="scene-label">09:31</div>
+      <div class="scene-title">Karim.</div>
+      <div class="scene-body">
+        <p>Your phone buzzes. Karim. He runs security at Lerner Cole.</p>
+        <div class="text-thread" id="karimThread"></div>
+      </div>
+      <div class="choices" id="karimChoices" style="display:none;">
+        <button class="choice" data-c="0">
+          <span class="choice-cmd">&gt; CONTINUE</span>
+          <span class="choice-desc">He's right. Back to work.</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  const thread = document.getElementById('karimThread');
+  const messages = [
+    { who: 'them', name: 'Karim', text: 'RelayPoint?' },
+    { who: 'you', name: 'You', text: 'Yeah.' },
+    { who: 'them', name: 'Karim', text: 'Same. Every firm I know is having this morning.' },
+    { who: 'them', name: 'Karim', text: 'The protection stopped at the transfer. Nothing rode inside the file. Once it was in their tenant, it was theirs.' }
+  ];
+
+  let idx = 0;
+  function addMsg() {
+    if (idx >= messages.length) {
+      setTimeout(() => {
+        document.getElementById('karimChoices').style.display = 'flex';
+        wireChoices([() => render('s5_purge')]);
+      }, 400);
+      return;
+    }
+    const m = messages[idx];
+    const name = document.createElement('div');
+    name.className = 'text-bubble-name';
+    name.textContent = m.name;
+    name.style.textAlign = m.who === 'you' ? 'right' : 'left';
+    name.style.alignSelf = m.who === 'you' ? 'flex-end' : 'flex-start';
+    thread.appendChild(name);
+    const bub = document.createElement('div');
+    bub.className = 'text-bubble ' + m.who;
+    bub.textContent = m.text;
+    thread.appendChild(bub);
+    idx++;
+    setTimeout(addMsg, 700 + m.text.length * 8);
+  }
+  setTimeout(addMsg, 300);
+};
+
+// ---------- Scene 5 — Purge ----------
+scenes.s5_purge = function() {
+  dayCounter.textContent = '14:00 TUE';
+  container.innerHTML = `
+    <div class="scene fade-in">
+      <div class="scene-label">14:00</div>
+      <div class="scene-title">One lever left.</div>
+      <div class="scene-body">
+        <p>Dana wants a plan by end of day. The only move you have is the RelayPoint admin console.</p>
+        <p>Tell RelayPoint to purge your tenant. Every file, every backup, gone. It won't undo the breach — that data's on forums already. It stops future exposure. It gives Dana something to say.</p>
+        <p>Nine months of BD work. Pitch decks, client pipeline, deal intelligence. Yours to destroy.</p>
+        <div class="purge-wrap">
+          <div class="purge-head">destructive action // no undo</div>
+          <button class="purge-btn" id="purgeBtn">
+            <div class="fill" id="purgeFill"></div>
+            <span class="purge-btn-label">Hold to Purge Tenant</span>
+          </button>
+          <div class="purge-hint" id="purgeHint">Hold for 3 seconds to confirm</div>
+          <div class="purge-log" id="purgeLog"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const btn = document.getElementById('purgeBtn');
+  const fill = document.getElementById('purgeFill');
+  const hint = document.getElementById('purgeHint');
+  const log = document.getElementById('purgeLog');
+  let holdTimer = null;
+  let holdStart = null;
+  let done = false;
+
+  function startHold(e) {
+    if (done) return;
+    e.preventDefault();
+    holdStart = Date.now();
+    holdTimer = setInterval(() => {
+      const elapsed = Date.now() - holdStart;
+      const pct = Math.min(100, (elapsed / 3000) * 100);
+      fill.style.height = pct + '%';
+      if (pct >= 100) complete();
+    }, 30);
+  }
+
+  function endHold(e) {
+    if (done) return;
+    if (holdTimer) clearInterval(holdTimer);
+    holdTimer = null;
+    fill.style.height = '0%';
+  }
+
+  function complete() {
+    done = true;
+    clearInterval(holdTimer);
+    fill.style.height = '100%';
+    btn.classList.add('done');
+    btn.querySelector('.purge-btn-label').textContent = 'Purging...';
+    hint.textContent = '';
+    unlock('purged');
+    S.flags.purged = true;
+
+    const files = [
+      'hendricks_diligence_v7.pkg',
+      'client_pipeline_q2.xlsx',
+      'partner_comp_models.xlsx',
+      'board_minutes_hendricks.docx',
+      'pitch_deck_library/',
+      'bd_analytics/2024/',
+      'matter_intel/',
+      'tenant.meta'
+    ];
+    let i = 0;
+    function tick() {
+      if (i >= files.length) {
+        const d = document.createElement('div');
+        d.className = 'done';
+        d.textContent = '> purge complete. ' + files.length + ' objects destroyed.';
+        log.appendChild(d);
+        setTimeout(() => render('s6_board'), 1200);
+        return;
+      }
+      const d = document.createElement('div');
+      d.className = 'wipe';
+      d.textContent = '> wipe: ' + files[i];
+      log.appendChild(d);
+      i++;
+      setTimeout(tick, 160);
+    }
+    tick();
+  }
+
+  btn.addEventListener('mousedown', startHold);
+  btn.addEventListener('mouseup', endHold);
+  btn.addEventListener('mouseleave', endHold);
+  btn.addEventListener('touchstart', startHold, { passive: false });
+  btn.addEventListener('touchend', endHold);
+  btn.addEventListener('touchcancel', endHold);
+};
+
+// ---------- Scene 6 — Boardroom ----------
+scenes.s6_board = function() {
+  dayCounter.textContent = 'DAY 45';
+  const reframeUnlocked = S.flags.informed && S.flags.leveled;
+  container.innerHTML = `
+    <div class="scene fade-in">
+      <div class="scene-label">day 45 · exec committee</div>
+      <div class="scene-title">The partner stares at you.</div>
+      <div class="scene-body">
+        <p>Windowless conference room. Slide behind you reads <em>Incident Overview</em>. A partner leans forward. Thirty years of M&A. He doesn't raise his voice.</p>
+        <p><strong>Partner:</strong> "We don't pick these vendors. Procurement does. IT does. Some partner in 2019 decided we needed RelayPoint and here we are. Our client data sits in forty cloud tenants we can't audit, can't control, can't pull back from. When the vendor goes down, we go down. What are we supposed to do — stop using software?"</p>
+        <p>Everyone looks at you.</p>
+      </div>
+      <div class="choices">
+        <button class="choice" data-c="0">
+          <span class="choice-cmd">&gt; LOCK DOWN</span>
+          <span class="choice-desc">"Cut every vendor. Paper review on all of them."</span>
+        </button>
+        <button class="choice" data-c="1">
+          <span class="choice-cmd">&gt; DEFLECT</span>
+          <span class="choice-desc">"We're reviewing the vendor stack."</span>
+        </button>
+        <button class="choice" data-c="2" ${reframeUnlocked ? '' : 'disabled'}>
+          <span class="choice-cmd">&gt; REFRAME</span>
+          <span class="choice-desc">"Auditing vendors won't save us. We need to protect the data so it doesn't matter which vendor fails."
+          ${reframeUnlocked ? '' : '<span class="choice-lock">locked — you didn\'t earn the credibility earlier</span>'}</span>
+        </button>
+      </div>
+    </div>
+  `;
+  wireChoices([
+    () => { S.flags.lockedDown = true; unlock('threw_chair'); hp(-30); render('s7_aftermath'); },
+    () => { S.flags.deflected = true; hp(-10); render('s7_aftermath'); },
+    () => { if (!reframeUnlocked) return; S.flags.reframed = true; unlock('named_it'); hp(5); render('s7_aftermath'); }
+  ]);
+};
+
+// ---------- Scene 7 — Aftermath ----------
+scenes.s7_aftermath = function() {
+  dayCounter.textContent = 'DAY 90';
+  container.innerHTML = `
+    <div class="scene fade-in ending-bad" style="background: linear-gradient(180deg, rgba(74, 16, 29, 0.95) 0%, rgba(3, 6, 13, 0.98) 100%); border-color: rgba(255, 68, 119, 0.5);">
+      <div class="scene-label" style="color:var(--ruby);">day 90 · post-mortem</div>
+      <div class="scene-title glitch" data-text="You did everything right.">You did everything right.</div>
+      <div class="scene-body">
+        <p>The deal closed. Not the way anyone wanted. The client sued. The firm settled.</p>
+        <p>RelayPoint is still operating. Customers are re-papering contracts. The stolen data is still for sale.</p>
+        <p>You did everything a good CISO does.</p>
+        <div style="margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.12);">
+          <div style="padding-left: 14px; border-left: 2px solid var(--ruby);">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: #FFB8D0;">$4.2M</div>
+            <div style="font-size: 11px; color: var(--mid); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 4px;">Response + settlements</div>
+          </div>
+          <div style="padding-left: 14px; border-left: 2px solid var(--ruby);">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: #FFB8D0;">1 CLIENT</div>
+            <div style="font-size: 11px; color: var(--mid); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 4px;">Gone. Three on notice.</div>
+          </div>
+          <div style="padding-left: 14px; border-left: 2px solid var(--ruby);">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: #FFB8D0;">47 VENDORS</div>
+            <div style="font-size: 11px; color: var(--mid); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 4px;">Still holding your data</div>
+          </div>
+          <div style="padding-left: 14px; border-left: 2px solid var(--ruby);">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: #FFB8D0;">0 LEVERAGE</div>
+            <div style="font-size: 11px; color: var(--mid); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 4px;">After the file left</div>
+          </div>
+        </div>
+      </div>
+      <div class="choices" style="margin-top: 20px;">
+        <button class="choice" data-c="0" style="justify-content: center; font-weight: 600;">
+          <span class="choice-cmd">&gt; CONTINUE</span>
+          <span class="choice-desc">There's something Karim said.</span>
+        </button>
+      </div>
+    </div>
+  `;
+  wireChoices([() => render('pivot')]);
+};
+
+// ---------- Pivot to Run 2 ----------
+scenes.pivot = function() {
+  dayCounter.textContent = '// REWIND';
+  container.innerHTML = `
+    <div class="scene fade-in">
+      <div class="pivot">
+        <div class="pivot-line">"If the protection had ridden inside the file, we wouldn't be on this call."</div>
+        <div class="pivot-sub">same day. same breach. one thing different.</div>
+        <button class="pivot-btn" id="pivotBtn">Run it back →</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('pivotBtn').addEventListener('click', () => {
+    S.run = 2;
+    S.hp = 100;
+    renderHP();
+    unlock('saw_both');
+    render('r2_s1');
+  });
+};
+
+// ==================== RUN 2 ====================
+
+function run2Banner() {
+  return `<div class="run2-banner"><span>Run 2 · Data is protected</span><span>After</span></div>`;
+}
+
+// ---------- R2 S1 — Admin console shows protected files ----------
+scenes.r2_s1 = function() {
+  dayCounter.textContent = '09:14 TUE';
+  container.innerHTML = `
+    ${run2Banner()}
+    <div class="scene fade-in">
+      <div class="scene-label">09:14 · tuesday</div>
+      <div class="scene-title">Same morning. Different tenant.</div>
+      <div class="scene-body">
+        <p>Mike's message hits Slack. RelayPoint is down. Same breach, same day.</p>
+        <p>You pull the admin console. The files are all still there — but the content is protected. The sensitive blocks never left the firm as cleartext.</p>
+        <div class="file-browser">
+          <div class="fb-head">RelayPoint admin // your tenant</div>
+          <div id="fbRows"></div>
+        </div>
+        <p id="r2s1FollowUp" style="opacity:0;">Dana's calling.</p>
+      </div>
+      <div id="r2s1Answer" style="opacity:0;"></div>
+    </div>
+  `;
+
+  const rows = [
+    { name: 'hendricks_diligence_v7.pkg', hex: '0x8FA2...', protected: true },
+    { name: 'client_pipeline_q2.xlsx', hex: '0x3B91...', protected: true },
+    { name: 'partner_comp_models.xlsx', hex: '0xD4E7...', protected: true },
+    { name: 'pitch_templates_generic/', hex: '—', protected: false },
+    { name: 'marketing_logos_2024.zip', hex: '—', protected: false }
+  ];
+
+  const fbRows = document.getElementById('fbRows');
+  rows.forEach((r, i) => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = 'fb-row' + (r.protected ? ' protected' : '');
+      div.style.animationDelay = '0s';
+      div.innerHTML = `
+        <span class="fb-icon">▸</span>
+        <span class="fb-name">${r.name}</span>
+        <span class="fb-hex">${r.hex}</span>
+        <span class="fb-status ${r.protected ? 'sealed' : 'open'}">${r.protected ? 'Protected' : 'Public'}</span>
+      `;
+      fbRows.appendChild(div);
+    }, i * 200);
+  });
+
+  setTimeout(() => {
+    document.getElementById('r2s1FollowUp').style.transition = 'opacity 0.5s';
+    document.getElementById('r2s1FollowUp').style.opacity = '1';
+  }, rows.length * 200 + 500);
+
+  setTimeout(() => {
+    const ans = document.getElementById('r2s1Answer');
+    ans.innerHTML = `
+      <button class="answer-btn" id="r2a1">
+        <span class="answer-tag">Pick up — tell Dana</span>
+        <span class="answer-text">"Dana. We're protected. Give me two minutes to pull the keys."</span>
+      </button>
+    `;
+    ans.style.transition = 'opacity 0.5s';
+    ans.style.opacity = '1';
+    document.getElementById('r2a1').addEventListener('click', () => render('r2_s2'));
+  }, rows.length * 200 + 1200);
+};
+
+// ---------- R2 S2 — Dana call ----------
+scenes.r2_s2 = function() {
+  dayCounter.textContent = '09:16 TUE';
+  container.innerHTML = `
+    ${run2Banner()}
+    <div class="scene fade-in">
+      <div class="scene-label">09:16</div>
+      <div class="scene-title">Dana on the line.</div>
+      <div class="scene-body">
+        <p><strong>Dana:</strong> "Talk to me."</p>
+        <p><strong>Dana:</strong> "What gets exposed?"</p>
+      </div>
+      <button class="answer-btn" id="r2a2">
+        <span class="answer-tag">Answer</span>
+        <span class="answer-text">"Files are still in their tenant. Content is encrypted. Pulling keys now. What gets exposed is cover pages and matter names. Nothing with weight."</span>
+      </button>
+    </div>
+  `;
+  document.getElementById('r2a2').addEventListener('click', () => render('r2_s3'));
+};
+
+// ---------- R2 S3 — Key pull ----------
+scenes.r2_s3 = function() {
+  dayCounter.textContent = '09:22 TUE';
+  container.innerHTML = `
+    ${run2Banner()}
+    <div class="scene fade-in">
+      <div class="scene-label">09:22</div>
+      <div class="scene-title">One lever.</div>
+      <div class="scene-body">
+        <p>The keys. The files still exist — in RelayPoint's tenant, their backups, the attacker's drive. It doesn't matter. Pull the keys and the content becomes math the attacker doesn't have.</p>
+        <div class="keypull-wrap">
+          <div class="keypull-head">revocation console // 12 keys</div>
+          <div class="key-grid" id="keyGrid"></div>
+          <div class="keypull-status" id="keyStatus">ready</div>
+        </div>
+      </div>
+      <div id="r2s3Answer" style="opacity:0;"></div>
+    </div>
+  `;
+
+  const grid = document.getElementById('keyGrid');
+  const status = document.getElementById('keyStatus');
+  const count = 12;
+  const keys = [];
+  for (let i = 0; i < count; i++) {
+    const k = document.createElement('div');
+    k.className = 'key';
+    const hex = Math.floor(Math.random() * 65536).toString(16).toUpperCase().padStart(4, '0');
+    k.innerHTML = `<span class="key-symbol">◆</span>`;
+    grid.appendChild(k);
+    keys.push(k);
+  }
+
+  setTimeout(() => {
+    status.textContent = 'pulling keys...';
+    keys.forEach((k, i) => {
+      setTimeout(() => {
+        k.classList.add('revoked');
+        if (i === keys.length - 1) {
+          setTimeout(() => {
+            status.textContent = 'all keys revoked';
+            status.classList.add('done');
+            const ans = document.getElementById('r2s3Answer');
+            ans.innerHTML = `
+              <button class="answer-btn" id="r2a3">
+                <span class="answer-tag">Continue</span>
+                <span class="answer-text">The stolen files are now cryptographic noise. Wherever they ended up, they're unreadable.</span>
+              </button>
+            `;
+            ans.style.transition = 'opacity 0.5s';
+            ans.style.opacity = '1';
+            document.getElementById('r2a3').addEventListener('click', () => render('r2_s4'));
+          }, 600);
+        }
+      }, i * 140);
+    });
+  }, 600);
+};
+
+// ---------- R2 S4 — Karim ----------
+scenes.r2_s4 = function() {
+  dayCounter.textContent = '09:31 TUE';
+  container.innerHTML = `
+    ${run2Banner()}
+    <div class="scene fade-in">
+      <div class="scene-label">09:31</div>
+      <div class="scene-title">Karim.</div>
+      <div class="scene-body">
+        <div class="text-thread" id="r2karim"></div>
+      </div>
+      <div id="r2s4Answer" style="opacity:0;"></div>
+    </div>
+  `;
+
+  const thread = document.getElementById('r2karim');
+  const messages = [
+    { who: 'them', name: 'Karim', text: 'RelayPoint?' }
+  ];
+  let idx = 0;
+  function addMsg() {
+    if (idx >= messages.length) {
+      setTimeout(() => {
+        const ans = document.getElementById('r2s4Answer');
+        ans.innerHTML = `
+          <button class="answer-btn" id="r2a4">
+            <span class="answer-tag">Reply</span>
+            <span class="answer-text">"Yeah. Keys pulled. We're clean."</span>
+          </button>
+        `;
+        ans.style.transition = 'opacity 0.5s';
+        ans.style.opacity = '1';
+        document.getElementById('r2a4').addEventListener('click', () => {
+          const youBub = document.createElement('div');
+          youBub.innerHTML = '<div class="text-bubble-name" style="text-align:right;">You</div><div class="text-bubble you">Yeah. Keys pulled. We\'re clean.</div>';
+          thread.appendChild(youBub.firstChild);
+          thread.appendChild(youBub.firstChild);
+
+          const typing = document.createElement('div');
+          typing.className = 'typing-indicator';
+          typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+          thread.appendChild(typing);
+
+          ans.style.opacity = '0';
+
+          setTimeout(() => {
+            typing.remove();
+            const n = document.createElement('div');
+            n.className = 'text-bubble-name';
+            n.textContent = 'Karim';
+            thread.appendChild(n);
+            const b = document.createElement('div');
+            b.className = 'text-bubble them';
+            b.textContent = "I need to talk to your team.";
+            thread.appendChild(b);
+            setTimeout(() => {
+              ans.innerHTML = `
+                <button class="answer-btn" id="r2a4b">
+                  <span class="answer-tag">Continue</span>
+                  <span class="answer-text">He's an hour behind. So is everyone else.</span>
+                </button>
+              `;
+              ans.style.opacity = '1';
+              document.getElementById('r2a4b').addEventListener('click', () => render('r2_s5'));
+            }, 600);
+          }, 1800);
+        });
+      }, 400);
+      return;
+    }
+    const m = messages[idx];
+    const name = document.createElement('div');
+    name.className = 'text-bubble-name';
+    name.textContent = m.name;
+    thread.appendChild(name);
+    const bub = document.createElement('div');
+    bub.className = 'text-bubble ' + m.who;
+    bub.textContent = m.text;
+    thread.appendChild(bub);
+    idx++;
+    setTimeout(addMsg, 800);
+  }
+  setTimeout(addMsg, 300);
+};
+
+// ---------- R2 S5 — Boardroom ----------
+scenes.r2_s5 = function() {
+  dayCounter.textContent = 'DAY 45';
+  container.innerHTML = `
+    ${run2Banner()}
+    <div class="scene fade-in">
+      <div class="scene-label">day 45 · exec committee</div>
+      <div class="scene-title">Same room. Same partner.</div>
+      <div class="scene-body">
+        <p><strong>Partner:</strong> "Walk us through what happened. And why we aren't in the Journal."</p>
+      </div>
+      <button class="answer-btn" id="r2a5">
+        <span class="answer-tag">Present</span>
+        <span class="answer-text">"The data was protected before it ever hit RelayPoint. When the vendor fell, we didn't."</span>
+      </button>
+    </div>
+  `;
+  document.getElementById('r2a5').addEventListener('click', () => render('r2_s5b'));
+};
+
+scenes.r2_s5b = function() {
+  container.innerHTML = `
+    ${run2Banner()}
+    <div class="scene fade-in">
+      <div class="scene-label">day 45 · exec committee</div>
+      <div class="scene-title">He nods.</div>
+      <div class="scene-body">
+        <p><strong>Partner:</strong> "Can we roll this out everywhere?"</p>
+      </div>
+      <button class="answer-btn" id="r2a5b">
+        <span class="answer-tag">Answer</span>
+        <span class="answer-text">"Already have."</span>
+      </button>
+    </div>
+  `;
+  document.getElementById('r2a5b').addEventListener('click', () => render('final'));
+};
+
+// ---------- Final compare ----------
+scenes.final = function() {
+  dayCounter.textContent = 'DAY 90';
+  container.innerHTML = `
+    <div class="scene fade-in">
+      <div class="scene-label">day 90 · same breach · two outcomes</div>
+      <div class="scene-title">Same CISO. Same Tuesday.</div>
+      <div class="scene-body">
+        <div class="compare">
+          <div class="compare-head">// the tape</div>
+          <div class="compare-table">
+            <div class="compare-cell head">&nbsp;</div>
+            <div class="compare-cell head before">Before</div>
+            <div class="compare-cell head after">After</div>
+
+            <div class="compare-cell label">Response costs</div>
+            <div class="compare-cell val-bad">$4.2M</div>
+            <div class="compare-cell val-good">$0</div>
+
+            <div class="compare-cell label">Clients lost</div>
+            <div class="compare-cell val-bad">1 (3 on notice)</div>
+            <div class="compare-cell val-good">0 (+2 won)</div>
+
+            <div class="compare-cell label">Data readable to attacker</div>
+            <div class="compare-cell val-bad">All of it</div>
+            <div class="compare-cell val-good">None of it</div>
+
+            <div class="compare-cell label">Leverage after breach</div>
+            <div class="compare-cell val-bad">None</div>
+            <div class="compare-cell val-good">Full</div>
+          </div>
+          <div class="compare-summary">
+            <div class="compare-summary-line">The CISO didn't change. The day didn't change. The vendor didn't change.</div>
+            <div class="compare-summary-sub">What changed is the firm protected <strong>the data</strong>, not the pipe.</div>
+          </div>
+        </div>
+
+        <div class="cta-block">
+          <div class="cta-eyebrow">// this isn't a thought experiment</div>
+          <div class="cta-title">Every firm ships sensitive files to vendors every day.</div>
+          <div class="cta-body">When those vendors fail, there's no move left. The fix isn't better walls. It's making the file carry its own.</div>
+          <div class="cta-line">That's what we built Confidencial to do.</div>
+          <div class="end-buttons">
+            <a href="https://confidencial.io" target="_blank" class="btn btn-primary">See Confidencial →</a>
+            <button class="btn btn-secondary" id="restart">↺ Play again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('restart').addEventListener('click', () => {
+    S.hp = 100; S.flags = {}; S.ach = []; S.run = 1;
+    renderHP();
+    render('s1');
+  });
+};
+
+// ==================== WIRE HELPER ====================
+function wireChoices(handlers) {
+  document.querySelectorAll('.choice').forEach(b => {
+    if (b.disabled) return;
+    b.addEventListener('click', () => {
+      const idx = +b.getAttribute('data-c');
+      if (handlers[idx]) handlers[idx]();
+    });
+  });
+}
+</script>
+</body>
+</html>
